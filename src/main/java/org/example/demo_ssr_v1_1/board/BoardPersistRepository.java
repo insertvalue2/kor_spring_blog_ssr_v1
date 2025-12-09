@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 // DB -- CRUD
 @RequiredArgsConstructor
 @Repository // IoC
@@ -21,5 +23,13 @@ public class BoardPersistRepository {
         // 엔티티 매니저 자동으로 insert 쿼리 만들어 던진다.
         entityManager.persist(board);
         return board;
+    }
+
+    // 게시글 전체 조회
+    public List<Board> findAll() {
+        return entityManager
+                .createQuery("SELECT b FROM Board b ORDER By b.createdAt DESC")
+                .getResultList();
+
     }
 }
