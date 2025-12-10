@@ -72,7 +72,29 @@ public class BoardController {
         repository.save(board);
         return "redirect:/";
     }
-    
+
+    // 삭제 @DeleteMapping 이지만 form 태그 활용 없음 get, post (fetch 함수 활용)
+    @PostMapping("/board/{id}/delete")
+    public String delete(@PathVariable Long id) {
+        repository.deleteById(id);
+        return "redirect:/";
+    }
+
+    // 상세보기 화면
+    // http://localhost:8080/board/1
+    @GetMapping("board/{id}")
+    public String detail(@PathVariable Long id, Model model) {
+
+        Board board = repository.findById(id);
+        if(board == null) {
+            // 404
+            throw new RuntimeException("게시글을 찾을 수 없어요 : " + id);
+        }
+
+        model.addAttribute("board", board);
+
+        return "board/detail";
+    }
 
 
 }
