@@ -37,7 +37,30 @@ public class UserController {
     }
 
 
-    // 회원 정수 수정 기능 요청
+    // 회원 정수 수정 기능 요청 - 더티 체킹
+    // http://localhost:8080/user/update
+    @PostMapping("/user/update")
+    public String updateProc(UserRequest.UpdateDTO updateDTO, HttpSession session) {
+        // 1.  인증 검사
+        User sessionUser =  (User) session.getAttribute("sessionUser");
+        if(sessionUser == null) {
+            System.out.println("로그인 하지 않은 사용자 접근 막음");
+            return "redirect:/login";
+        }
+        // 2.  유효성 검사
+        // 3. 세션 메모리에 있던 기존 상태값을 변경 처리
+        try {
+            updateDTO.validate();
+            User updateUser = userRepository.updateById(sessionUser.getId(), updateDTO);
+            // 세션에 정보 갱신
+            session.setAttribute("sessionUser", updateUser);
+            // 수정 후 리다이렉트 처리 - 게시판 목록으로 이동
+            return "redirect:/";
+        } catch (Exception e) {
+            return "user/update-form";
+        }
+    }
+
 
 
     // 로그아웃 기능 요청
