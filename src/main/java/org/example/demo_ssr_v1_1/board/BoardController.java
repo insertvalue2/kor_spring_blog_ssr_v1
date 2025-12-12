@@ -2,6 +2,7 @@ package org.example.demo_ssr_v1_1.board;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.example.demo_ssr_v1_1._core.errors.exception.Exception400;
 import org.example.demo_ssr_v1_1.user.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
