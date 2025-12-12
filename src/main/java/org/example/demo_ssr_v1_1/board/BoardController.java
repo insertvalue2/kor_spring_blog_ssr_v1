@@ -2,7 +2,7 @@ package org.example.demo_ssr_v1_1.board;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.example.demo_ssr_v1_1._core.errors.exception.Exception400;
+import org.example.demo_ssr_v1_1._core.errors.exception.*;
 import org.example.demo_ssr_v1_1.user.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,14 +37,13 @@ public class BoardController {
        } 
 
        // 2. 인가 검사 (0)
-       Board board =  repository.findById(id);
+       Board board = repository.findById(id);
        if(board == null) {
-            throw new RuntimeException("수정할 게시글을 찾을 수 없어요");
+            throw new Exception500("게시글이 삭제 되었습니다");
        }
 
         if(board.isOwner(sessionUser.getId()) == false) {
-            System.out.println("님이 작성한 게시글이 아니에요");
-            return "redirect:/";
+            throw new Exception403("게시글 수정 권한 없음");
         }
 
        model.addAttribute("board", board);
@@ -65,14 +64,12 @@ public class BoardController {
         // 1. 인증 처리 (o)
         User sessionUser =  (User)session.getAttribute("sessionUser");
         if(sessionUser == null) {
-            System.out.println("로그인 안한 사용자가 요청 함");
-            return "redirect:/login";
+            throw new Exception401("로그인 먼저 해주세요");
         }
 
         Board board = repository.findById(id);
         if(board.isOwner(sessionUser.getId()) == false) {
-            System.out.println("님이 작성한 게시글이 아니에요");
-            return "redirect:/";
+            throw new Exception403("게시글 수정 권한이 없습니다");
         }
 
         try {
@@ -97,7 +94,6 @@ public class BoardController {
         return "board/list";
     }
 
-
     /**
      * 게시글 작성 화면 요청
      * @param session
@@ -107,7 +103,7 @@ public class BoardController {
     public String saveFrom(HttpSession session) {
         User sessionUser = (User) session.getAttribute("sessionUser");
         if(sessionUser == null) {
-            return "redirect:/login";
+            throw new Exception401("로그인 먼저 해주세요");
         }
         return "board/save-form";
     }
@@ -123,7 +119,7 @@ public class BoardController {
         // 1. 인증 처리 확인
         User sessionUser = (User) session.getAttribute("sessionUser");
         if(sessionUser == null) {
-            return "redirect:/login";
+            throw new Exception401("로그인 먼저 해주세요");
         }
 
         Board board = saveDTO.toEntity(sessionUser);
@@ -143,13 +139,12 @@ public class BoardController {
         // 1. 인증 처리 확인
         User sessionUser = (User) session.getAttribute("sessionUser");
         if(sessionUser == null) {
-            return "redirect:/login";
+            throw new Exception401("로그인 먼저 해주세요");
         }
         // 2. 인가 처리 (o) || 관리자 권한
         Board board = repository.findById(id);
         if(board.isOwner(sessionUser.getId()) == false) {
-            System.out.println("님이 작성한 게시글이 아니에요");
-            return "redirect:/";
+            throw new Exception401("삭제 권한이 없습니다");
         }
 
         repository.deleteById(id);
@@ -166,12 +161,10 @@ public class BoardController {
     public String detail(@PathVariable Long id, Model model) {
         Board board = repository.findById(id);
         if(board == null) {
-            // 404
-            throw new RuntimeException("게시글을 찾을 수 없어요 : " + id);
+            throw new Exception404("게시글을 찾을 수 없어요 : ");
         }
         model.addAttribute("board", board);
         return "board/detail";
     }
-
 
 }
