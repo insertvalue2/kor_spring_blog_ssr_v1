@@ -31,10 +31,7 @@ public class BoardController {
 
        // 1. 인증 검사 (0)
        User sessionUser = (User)session.getAttribute("sessionUser"); // sessionUser -> 상수
-       if(sessionUser == null) {
-           System.out.println("로그인 안한 사용자의 요청이 들어 옴");
-           return "redirect:/login";
-       } 
+       // LoginInterceptor 가 알아서 처리 해줌 !!
 
        // 2. 인가 검사 (0)
        Board board = repository.findById(id);
@@ -63,9 +60,7 @@ public class BoardController {
 
         // 1. 인증 처리 (o)
         User sessionUser =  (User)session.getAttribute("sessionUser");
-        if(sessionUser == null) {
-            throw new Exception401("로그인 먼저 해주세요");
-        }
+        // LoginInterceptor 가 알아서 처리 해줌 !!
 
         Board board = repository.findById(id);
         if(board.isOwner(sessionUser.getId()) == false) {
@@ -102,9 +97,7 @@ public class BoardController {
     @GetMapping("/board/save")
     public String saveFrom(HttpSession session) {
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if(sessionUser == null) {
-            throw new Exception401("로그인 먼저 해주세요");
-        }
+        // LoginInterceptor 가 알아서 처리 해줌 !!
         return "board/save-form";
     }
 
@@ -118,9 +111,7 @@ public class BoardController {
     public String saveProc(BoardRequest.SaveDTO saveDTO, HttpSession session) {
         // 1. 인증 처리 확인
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if(sessionUser == null) {
-            throw new Exception401("로그인 먼저 해주세요");
-        }
+        // LoginInterceptor 가 알아서 처리 해줌 !!
 
         Board board = saveDTO.toEntity(sessionUser);
         repository.save(board);
@@ -138,9 +129,8 @@ public class BoardController {
         // 1. 인증 처리 (o)
         // 1. 인증 처리 확인
         User sessionUser = (User) session.getAttribute("sessionUser");
-        if(sessionUser == null) {
-            throw new Exception401("로그인 먼저 해주세요");
-        }
+        // LoginInterceptor 가 알아서 처리 해줌 !!
+
         // 2. 인가 처리 (o) || 관리자 권한
         Board board = repository.findById(id);
         if(board.isOwner(sessionUser.getId()) == false) {
