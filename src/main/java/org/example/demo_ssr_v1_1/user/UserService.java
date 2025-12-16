@@ -7,18 +7,7 @@ import org.example.demo_ssr_v1_1._core.errors.exception.Exception404;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// Service --> 응답 DTO 설계 해서 전달 ---> Controller
-
-/**
- * 사용자 서비스 레이어
- *
- * 1. 역할
- *    - 비즈니스 로직을 처리하는 계층
- *    - Controller 와 Repository 사이의 중간 계층
- *    - 트랜잭션 관리
- *    - 여러 Repsitory를 조합하여 복잡한 비즈니스 로직을 처리
- */
-@Service // IoC 대상 @Component 의 특수한 형태
+@Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
