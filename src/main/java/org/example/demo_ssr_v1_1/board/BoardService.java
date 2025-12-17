@@ -3,6 +3,7 @@ package org.example.demo_ssr_v1_1.board;
 import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v1_1._core.errors.exception.Exception403;
 import org.example.demo_ssr_v1_1._core.errors.exception.Exception404;
+import org.example.demo_ssr_v1_1.reply.ReplyRepository;
 import org.example.demo_ssr_v1_1.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class BoardService {
 
     private final BoardRepository boardRepository;
+    private final ReplyRepository replyRepository;
 
     /**
      * 게시글 목록 조회 (페이징 처리)
@@ -142,6 +144,8 @@ public class BoardService {
        if(!boardEntity.isOwner(sessionUserId)) {
            throw new Exception403("삭제 권한이 없습니다");
        }
+       // 게시글 삭제 시 제약 오류 발생 하기 때문에 댓글 부터 삭제 후 게시글 삭제 처리 해야 함
+       replyRepository.deleteByBoardId(boardId);
        // 4
        boardRepository.deleteById(boardId);
     }
