@@ -68,6 +68,9 @@ public class BoardController {
     public String boardList(Model model) {
         List<BoardResponse.ListDTO> boardList = boardService.게시글목록조회();
         model.addAttribute("boardList", boardList);
+
+        // 여기서 댓글 목록을 조회 해서 화면단에 뿌려야 된다.
+
         return "board/list";
     }
 
