@@ -30,7 +30,7 @@ public class ReplyController {
     }
 
     @PostMapping("/reply/{id}/delete")
-    public String deleteProc(@PathVariable Long replyId, HttpSession session) {
+    public String deleteProc(@PathVariable(name = "id") Long replyId, HttpSession session) {
        User sessionUser = (User) session.getAttribute("sessionUser");
        Long boardId = replyService.댓글삭제(replyId, sessionUser.getId());
        return "redirect:/board/" + boardId;
