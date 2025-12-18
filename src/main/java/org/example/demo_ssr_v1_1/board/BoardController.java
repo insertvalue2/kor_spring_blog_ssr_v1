@@ -74,7 +74,10 @@ public class BoardController {
 
         int pageIndex = Math.max(0, page - 1);
         BoardResponse.PageDTO boardPage = boardService.게시글목록조회(pageIndex, size, keyword);
+        //이 코드는  머스태치 파일에  boardPage 데이터를 내려 주고 있다. 
         model.addAttribute("boardPage", boardPage);
+        model.addAttribute("keyword", keyword != null ? keyword : "");
+        
         return "board/list";
     }
 
