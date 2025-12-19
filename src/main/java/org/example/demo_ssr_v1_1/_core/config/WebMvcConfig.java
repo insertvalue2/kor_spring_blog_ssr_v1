@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -56,6 +57,27 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 // ||d+ 는 정규표현식으로 1개 이상의 숫자를 의미한다. 
                 // /board/1, board/1234 <-- 허용 
                 // /board/abc 같은 경우 매칭 되지 않음
+    }
+
+    /**
+     * 정적 리소스 핸들러
+     * 업로드된 이미지 파일을 웹에서 접근할 수 있도록 설정합니다.
+     */
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+
+        /**
+         *  /images/** 경로로 요청이 들어오면 나의 폴더 images/ 디렉토리에서 찾게 설정합니다
+         */
+        // 머스태치 이미지 태그에 src 경로에 /images/** 같은 경로로 설정 되어 있다면
+        // 스프링이 알아서 내 폴더 file:(프로젝트 루트 디렉토리)안에 images/ 폴더를 찾게 한다.
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("file:///D:/uploads/");
+        //** file:/// 문법 설명
+        // file: 파일 시스템을 가리킨다 의미이다.
+        // 파일 시스템에서 절대 경로 를 의미하는 URI 표기법은 -> ///: 이다.
+        // file:images/  앞에 슬러시가 없기 때문에 상대 경로를 의미한다.
+        // file:///D:upload/ <-- 내 컴퓨터 절대 경로를 의미한다.
     }
 }
 

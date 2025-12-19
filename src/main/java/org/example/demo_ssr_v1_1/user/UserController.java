@@ -25,6 +25,19 @@ public class UserController {
 
     private final UserService userService;
 
+    // 마이페이지
+    // http://localhost:8080/user/detail
+    @GetMapping("/user/detail")
+    public String detail(Model model, HttpSession session) {
+        User sessionUser = (User) session.getAttribute("sessionUser");
+
+        User user = userService.마이페이지(sessionUser.getId());
+
+        model.addAttribute("user", user);
+        return "user/detail";
+    }
+
+
     // 회원 정보 수정 화면 요청
     // http://localhost:8080/user/update
     @GetMapping("/user/update")

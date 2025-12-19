@@ -30,14 +30,27 @@ public class MyExceptionHandler {
     }
 
     // 401 인증 오류
+//    @ExceptionHandler(Exception401.class)
+//    public String ex401(Exception401 e, HttpServletRequest request, Model model) {
+//        log.warn("=== 401 에러 발생  ===");
+//        log.warn("요청 URL : {}", request.getRequestURL());
+//        log.warn("에러 메세지 : {}", e.getMessage());
+//        log.warn("예외 클래스 : {}", e.getClass().getSimpleName());
+//        //request.setAttribute("msg", e.getMessage());
+//        model.addAttribute("msg", e.getMessage());
+//        return "err/401";
+//    }
     @ExceptionHandler(Exception401.class)
-    public String ex401(Exception401 e, HttpServletRequest request) {
-        log.warn("=== 401 에러 발생  ===");
-        log.warn("요청 URL : {}", request.getRequestURL());
-        log.warn("에러 메세지 : {}", e.getMessage());
-        log.warn("예외 클래스 : {}", e.getClass().getSimpleName());
-        request.setAttribute("msg", e.getMessage());
-        return "err/401";
+    @ResponseBody
+    public ResponseEntity<String> ex401(Exception401 e) {
+        String script = "<script>" +
+                "alert('" + e.getMessage() +"');" +
+                "location.href = '/login';" +
+                "</script>";
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .contentType(MediaType.TEXT_HTML)
+                .body(script);
     }
 
     // 403 인가 오류
@@ -66,13 +79,15 @@ public class MyExceptionHandler {
 
 
     // 404 인가 오류
+    // 템플릿 파일에서 세션 정보와 / Request 객체를 바로 접근 못하기 막았음 (기본값)
     @ExceptionHandler(Exception404.class)
-    public String ex404(Exception404 e, HttpServletRequest request) {
+    public String ex404(Exception404 e, HttpServletRequest request, Model model) {
         log.warn("=== 404 에러 발생  ===");
         log.warn("요청 URL : {}", request.getRequestURL());
         log.warn("에러 메세지 : {}", e.getMessage());
         log.warn("예외 클래스 : {}", e.getClass().getSimpleName());
-        request.setAttribute("msg", e.getMessage());
+        //request.setAttribute("msg", e.getMessage());
+        model.addAttribute("msg", e.getMessage());
         return "err/404";
     }
 
