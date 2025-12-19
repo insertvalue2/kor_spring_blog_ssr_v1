@@ -10,7 +10,7 @@
                  <img src="/images/{{user.profileImage}}" alt="프로필사진" class="rounded-circle border"
                          style="width: 200px;height: 200px; object-fit: cover">
                 <div class="mt-2">
-                    <form action="" method="post" style="display: inline">
+                    <form action="/user/profile-image/delete" method="post" style="display: inline">
                         <button type="submit" class="btn btn-sm btn-danger"
                             onclick="return confirm('프로필 사진을 삭제하시겠습니까?')">프로필삭제</button>
                     </form>

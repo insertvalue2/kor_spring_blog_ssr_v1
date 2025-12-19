@@ -8,6 +8,8 @@ import org.example.demo_ssr_v1_1._core.utils.FileUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -97,5 +99,33 @@ public class UserService {
             throw new Exception403("권한이 없습니다");
         }
         return user;
+    }
+
+    @Transactional
+    public User 프로필이미지삭제(Long sessionUserId) {
+    // 1. 회원 정보 조회
+    // 2. 회원 정보와 세션 id 값이 같은지 판단 -> 인가 처리
+    // 3. 프로필 이미지가 있다면 삭제 (FileUtil) 헬퍼 클래스 사용 할 예정 (디스크에서 삭제)
+    // 4. DB 에서 프로필 이름 null 로 업데이트 처리
+    User userEntity = userRepository.findById(sessionUserId)
+            .orElseThrow(() -> new Exception404("사용자를 찾을 수 없습니다"));
+
+    if(!userEntity.isOwner(sessionUserId)) {
+        throw new Exception403("프로필 이미지 삭제 권한이 없습니다");
+    }
+
+    String profileImage = userEntity.getProfileImage();
+    if(profileImage != null && !profileImage.isEmpty()) {
+        try {
+            FileUtil.deleteFile(profileImage);
+        } catch (IOException e) {
+            System.err.println("프로필 이미지 파일 삭제 실패");
+        }
+    }
+
+    // 객체 상태값 변경 (트랜 잭션이 끝나는 시점 더티 체킹 된)
+    userEntity.setProfileImage(null);
+
+    return userEntity;
     }
 }

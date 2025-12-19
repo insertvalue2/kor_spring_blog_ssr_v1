@@ -71,4 +71,24 @@ public class FileUtil {
         return contentType != null && contentType.startsWith("image/");
     }
 
+    // 프로필 이미지 삭제 처리
+    public static void deleteFile(String filename) throws IOException {
+        deleteFile(filename, IMAGES_DIR);
+    }
+
+    public static void deleteFile(String filename, String uploadDir) throws IOException {
+        // 방어적 코드 (파일 이름이 없다면 삭제할 것이 없음)
+        if(filename == null || filename.isEmpty()) {
+            return;
+        }
+        // 삭제할 파일의 전체 경로를 생성해야함 (D:/uploads)
+        // file:///D:/uploads/ + a.png (경로 + 파일이름)
+        Path filePath = Paths.get(uploadDir, filename);
+        if(Files.exists(filePath)) {
+            Files.delete(filePath);
+        }
+        // 파일이 없으면 그냥 종료 됨
+    }
+
+
 }
