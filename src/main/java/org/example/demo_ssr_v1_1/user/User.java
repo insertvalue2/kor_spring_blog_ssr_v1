@@ -47,6 +47,8 @@ public class User {
         // 유효성 검사
         updateDTO.validate();
         this.password = updateDTO.getPassword();
+        // 추가
+        this.profileImage = updateDTO.getProfileImageFilename();
         // 더티 체킹 (변경 감지)
         // 트랜잭션이 끝나면 자동으로 update 쿼리 진행
     }

@@ -60,6 +60,7 @@ public class UserController {
         User sessionUser = (User) session.getAttribute("sessionUser");
         User user = userService.회원정보수정화면(sessionUser.getId());
         model.addAttribute("user", user);
+
         return "user/update-form";
     }
 
@@ -75,7 +76,7 @@ public class UserController {
             User updateUser = userService.회원정보수정(updateDTO, sessionUser.getId());
             // 회원 정보 수정은 - 세션 갱신해 주어야 한다.
             session.setAttribute("sessionUser", updateUser);
-            return "redirect:/";
+            return "redirect:/user/detail";
         } catch (Exception e) {
             return "user/update-form";
         }
