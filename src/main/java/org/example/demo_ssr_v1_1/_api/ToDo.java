@@ -1,0 +1,14 @@
+package org.example.demo_ssr_v1_1._api;
+
+import lombok.Data;
+import org.springframework.web.bind.annotation.GetMapping;
+
+// 응답 ToDo 에 대한 DTO 설계
+@Data
+public class ToDo {
+    // { "userId": 1, "id": 1, "title": "delectus aut autem", "completed": false }
+    private Integer userId;
+    private Integer id;
+    private String title;
+    private boolean completed;
+}
