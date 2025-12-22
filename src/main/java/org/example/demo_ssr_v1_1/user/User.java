@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 // 엔티티 화면 보고 설계해 보세요.
 @NoArgsConstructor
@@ -29,6 +31,11 @@ public class User {
 
     //@Column(nullable = false)
     private String profileImage; // 추가
+
+    // 나중에 다른 개발자가 findById(쿼리 메서드 호출할 때 신경 쓸 필요없이 전부 role 까지 반환 해줌)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id")
+    private List<UserRole> roles = new ArrayList<>();
 
     @Builder
     public User(Long id, String username, String password,
