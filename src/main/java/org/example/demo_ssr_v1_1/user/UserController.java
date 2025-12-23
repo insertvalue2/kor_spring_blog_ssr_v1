@@ -1,13 +1,24 @@
 package org.example.demo_ssr_v1_1.user;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v1_1._core.errors.exception.Exception403;
 import org.example.demo_ssr_v1_1._core.errors.exception.Exception404;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
 
 /**
  *  사용자 Controller (표현 계층) 
@@ -24,6 +35,104 @@ import org.springframework.web.bind.annotation.PostMapping;
 public class UserController {
 
     private final UserService userService;
+
+    @Value("${oauth.kakao.client-id}")
+    private String clientId;
+
+    @Value("${tenco.key}")
+    private String tencoKey;
+
+    //TODO - 테스트 용 코드 - 삭제 예정
+    @PostConstruct
+    public void init() {
+        System.out.println("현재 적용된 카카오 클라이언트 키 확인 : " + clientId);
+        System.out.println("현재 적용된 나의 시크릿 키 확인 : " + tencoKey);
+    }
+
+    // 로그인 인터셉터에서 여기 못 들어오게 막고 있음 !!
+    // [흐름] 1.인가코드받기 -> 2. 토큰 발급 요청 (JWT) -> 3. JWT 으로 사용자 정보 요청 -> 4. 우리 서버에 로그인/회원가입 처리
+    @GetMapping("/user/kakao")
+    @ResponseBody
+    public String kakaoCallback(@RequestParam(name = "code") String code) {
+
+        // 1. 인가 코드 받아서 확인
+        System.out.println("1. 카카오 인가코드 확인 : " + code);
+
+        // 2. 토큰 발급 요청 (https://kauth.kakao.com/oauth/token) - POST
+        // 2.1 HTTP 헤더 커스텀 -
+        // Content-Type: application/x-www-form-urlencoded;charset=utf-8
+
+        // 2.2
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 2.3
+        // HTTP 메시지 헤더 구성
+        HttpHeaders tokenHeaders = new HttpHeaders();
+        tokenHeaders.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        // 2.4 HTTP 메시지 바디 구성( POST )
+        MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
+        tokenParams.add("grant_type", "authorization_code");
+        tokenParams.add("client_id", "a29c279811318c09b37aeaeb8319024e");
+        tokenParams.add("redirect_uri", "http://localhost:8080/user/kakao");
+        tokenParams.add("code", code);
+        // 시크릿 키 추가
+        tokenParams.add("client_secret", "m2rBlEcfYhVX1wZWj7mXi9Uy1cCDNKHm");
+
+        // 2.5 바디 + 헤더 구성
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
+
+        // 2.6 요청하고 JWT 토큰 응답 받기 (카카오에서 액세스 토큰이라고 부름)
+        ResponseEntity<UserResponse.OAuthToken> tokenResponse =  restTemplate.exchange(
+                "https://kauth.kakao.com/oauth/token",
+                HttpMethod.POST,
+                tokenRequest,
+                UserResponse.OAuthToken.class);
+
+
+        // JWT 토큰 확인 (액세스 토큰 )
+        System.out.println(tokenResponse.getHeaders());
+        System.out.println(tokenResponse.getBody().getAccessToken());
+        System.out.println(tokenResponse.getBody().getExpiresIn());
+
+        /// /////////////////////////////////////////////
+        // 3. 액세스 토큰을 받았기 때문에 카카오 자원서버(User정보 등) 사용자에 대한 정보를 요청할 수 있다.
+        /// /////////////////////////////////////////////
+        // GET/POST https://kapi.kakao.com/v2/user/me
+        // 3.1 HTTP 클라이언트 선언
+        RestTemplate profileRt = new RestTemplate();
+
+        // 3.2 HTTP 메시지 헤더 커스텀
+        HttpHeaders profileHeaders = new HttpHeaders();
+        // Bearer + 공백 한칸 무조건 (안하면 오류 발생)
+        profileHeaders.add("Authorization",
+                "Bearer " + tokenResponse.getBody().getAccessToken());
+        profileHeaders.add("Content-Type",
+                "application/x-www-form-urlencoded;charset=utf-8");
+
+        // 3.3 요청 메시지(요청 엔티티) 생성 ( 요청 바디 없음, 안 만들어 도 됨)
+        HttpEntity<Void> profileRequest = new HttpEntity<>(profileHeaders);
+
+        ResponseEntity<UserResponse.KakaoProfile> profileResponse =
+                profileRt.exchange(
+                        "https://kapi.kakao.com/v2/user/me",
+                        HttpMethod.POST,
+                        profileRequest,
+                        UserResponse.KakaoProfile.class);
+
+        // 3.4 사용자 정보 수신 완료
+        System.out.println(profileResponse.getBody().getId());
+        System.out.println(profileResponse.getBody().getProperties().getNickname());
+        System.out.println(profileResponse.getBody().getProperties().getThumbnailImage());
+
+        /// /////////////////////////////////////////////
+        // 4. 최초 사용자라면 강제 회원 가입 처리 및 로그인 처리
+        /// /////////////////////////////////////////////
+
+
+        return profileResponse.getBody().getProperties().getNickname();
+    }
+
 
     // 프로필 이미지 삭제 하기
     @PostMapping("/user/profile-image/delete")
