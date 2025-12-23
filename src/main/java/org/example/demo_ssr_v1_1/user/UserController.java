@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.UUID;
+
 /**
  *  사용자 Controller (표현 계층) 
  *  핵심 개념 : 
@@ -52,8 +54,7 @@ public class UserController {
     // 로그인 인터셉터에서 여기 못 들어오게 막고 있음 !!
     // [흐름] 1.인가코드받기 -> 2. 토큰 발급 요청 (JWT) -> 3. JWT 으로 사용자 정보 요청 -> 4. 우리 서버에 로그인/회원가입 처리
     @GetMapping("/user/kakao")
-    @ResponseBody
-    public String kakaoCallback(@RequestParam(name = "code") String code) {
+    public String kakaoCallback(@RequestParam(name = "code") String code, HttpSession session) {
 
         // 1. 인가 코드 받아서 확인
         System.out.println("1. 카카오 인가코드 확인 : " + code);
@@ -127,10 +128,47 @@ public class UserController {
 
         /// /////////////////////////////////////////////
         // 4. 최초 사용자라면 강제 회원 가입 처리 및 로그인 처리
-        /// /////////////////////////////////////////////
+        /// ////////////////////////////////////////////
+        // DB 에 회원 가입 및 여부 확인 -> User 엔티티 수정
+        // 소셜 로그인 닉네임 과 기존 회원 가입 닉네임 중복 될 수 있음.
+        UserResponse.KakaoProfile kakaoProfile = profileResponse.getBody();
 
+        // username = 김근호_4645768
+        String username = kakaoProfile.getProperties().getNickname()
+                + "_" + kakaoProfile.getId();
 
-        return profileResponse.getBody().getProperties().getNickname();
+        // 김근호_4645768 (새로 생성한 username 이 DB 있다면 -> 아.. 이전에 회원 가입 했구만)
+        // 사용자 이름 조회 쿼리 수행
+        // userOrigin -> User 이거나 null 이다. 
+        User userOrigin = userService.사용자이름조회(username);
+        if(userOrigin == null) {
+            // 최소 카카오 소셜 로그인 사용자 임 
+            System.out.println("기존 회원이 아니므로 자동 회원가입 진행 시킴");
+
+            User newUser = User.builder()
+                    .username(username)
+                    .password(tencoKey) // 소셜 로그인은 임시 비밀번호로 설정 한다.
+                    .email(username + "@kakao.com") // 선택 사항 (카카오 이메일 비즈니스 앱 신청)
+                    .provider(OAuthProvider.KAKAO)
+                    .build();
+
+            // 프로필 이미지가 있다면 설정 (카카오 사용자 정보에)
+            // https://asljasdf.jpg
+            String profileImage = kakaoProfile.getProperties().getProfileImage();
+            if (profileImage != null && !profileImage.isEmpty()) {
+                newUser.setProfileImage(profileImage); // 카카오에서 넘겨 받은 URL 그대로 저장
+            }
+
+            userService.소셜회원가입(newUser);
+            // 조심 해야 함 ! 반드시 필요함
+            userOrigin = newUser; // 반드시 넣어 줘야 함 왜? 로그인 처리 해야 함
+        } else {
+            System.out.println("이미 가입된 회원입니다. 바로 로그인 처리 진행합니다");
+        }
+
+        session.setAttribute("sessionUser", userOrigin);
+
+        return "redirect:/";
     }
 
 
