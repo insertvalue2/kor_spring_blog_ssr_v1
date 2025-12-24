@@ -31,7 +31,6 @@
                        value="{{user.username}}">
             </div>
 
-            {{#user.local}}
             <!-- 소셜 로그인 회원 가입자는 비밀번호 수정 불가 처리 해야 함 -->
             <div class="mb-3">
                 <input type="password" class="form-control" placeholder="Enter password" name="password" required>
@@ -45,7 +44,7 @@
                 <small class="form-text text-muted mt-1">이미지 파일만 업로드 가능합니다(JPG, PNG, GIF)</small>
             </div>
             <button type="submit" class="btn btn-primary form-control">회원정보수정</button>
-            {{/user.local}}
+
         </form>
     </div>
 </div>

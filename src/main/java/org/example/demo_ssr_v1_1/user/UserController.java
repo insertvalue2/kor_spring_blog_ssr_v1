@@ -10,6 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
@@ -37,6 +38,7 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${oauth.kakao.client-id}")
     private String clientId;
@@ -147,7 +149,7 @@ public class UserController {
 
             User newUser = User.builder()
                     .username(username)
-                    .password(tencoKey) // 소셜 로그인은 임시 비밀번호로 설정 한다.
+                    .password(passwordEncoder.encode(tencoKey)) // 소셜 로그인은 임시 비밀번호로 설정 한다.
                     .email(username + "@kakao.com") // 선택 사항 (카카오 이메일 비즈니스 앱 신청)
                     .provider(OAuthProvider.KAKAO)
                     .build();
