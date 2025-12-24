@@ -144,4 +144,11 @@ public class User {
         return "/images/" + this.profileImage;
     }
 
+    // true, false
+    public boolean isLocal() {
+        // LOCAL -> true
+        // KAKAO -> false
+        return this.provider == OAuthProvider.LOCAL;
+    }
+
 }
