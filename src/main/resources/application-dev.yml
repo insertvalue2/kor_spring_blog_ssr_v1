@@ -24,7 +24,7 @@ spring:
   # 데이터베이스 연결 설정 (H2 인메모리 데이터베이스)
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/myblog?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/myblog?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
     username: root
     password: root
 
@@ -70,6 +70,7 @@ spring:
 oauth:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}
+    client-secret: ${KAKAO_CLIENT_SECRET}
 
 tenco:
   key: ${TENCO_KEY}
