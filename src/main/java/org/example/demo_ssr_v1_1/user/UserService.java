@@ -146,6 +146,11 @@ public class UserService {
             throw new Exception400("이미 존재하는 사용자 이름입니다");
         }
 
+        // 1.1 이메일 중복 체크
+        if(userRepository.findByEmail(joinDTO.getEmail()).isPresent()) {
+            throw new Exception400("이미 등록된 이메일 입니다");
+        }
+
         // User 엔티티에 저장할 때는 String 이어야 하고 null 값도 가질 수 있음
         String profileImageFileName = null;
 
