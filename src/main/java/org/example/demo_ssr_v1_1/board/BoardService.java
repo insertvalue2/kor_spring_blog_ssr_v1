@@ -60,36 +60,6 @@ public class BoardService {
     }
 
 
-//    /**
-//     * 게시글 목록 조회
-//     * 트랜잭션
-//     *  - 읽기 전용 트랜잭션 - 성능 최적화
-//     * @return 게시글 목록 (생성일 기준으로 내림차순)
-//     */
-//    public List<BoardResponse.ListDTO> 게시글목록조회() {
-//        // 자바문법
-//        // 데이터 타입을 변환 해서 맞춰 주어야 한다.
-//        List<Board> boardList = boardRepository.findAllWithUserOrderByCreatedAtDesc();
-//        // List<Board> ---> List<BoardResponse.ListDTO>
-//        // 1. 반복문
-////        List<BoardResponse.ListDTO> dotList = new ArrayList<>();
-////        for(Board board : boardList) {
-////            BoardResponse.ListDTO dto = new BoardResponse.ListDTO(board);
-////            dotList.add(dto);
-////        }
-//
-//        // 2. 람다 표현식
-////        return boardList.stream()
-////                .map(board -> new BoardResponse.ListDTO(board))
-////                .collect(Collectors.toList());
-//
-//        // 3. 참조 메서드
-//        return boardList.stream()
-//                .map(BoardResponse.ListDTO::new)
-//                .collect(Collectors.toList());
-//        //return dotList;
-//    }
-
     public BoardResponse.DetailDTO 게시글상세조회(Long boardId, Long userId) {
 
         Board board = boardRepository.findByIdWithUser(boardId)
