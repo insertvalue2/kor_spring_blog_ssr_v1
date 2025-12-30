@@ -309,7 +309,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-
+    @Transactional
     public User 포인트충전(Long userId, Integer amount) {
         // 1. 사용자 조회
         User user = userRepository.findById(userId)
