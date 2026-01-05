@@ -56,6 +56,7 @@ public class UserApiController {
 
     }
 
+    // TODO - 테스트용 삭제 예정
     // api/point/charge
     @PostMapping("api/point/charge")
     public ResponseEntity<?> chargePoint(@RequestBody UserRequest.PointChargeDTO reqDTO,
