@@ -1,6 +1,9 @@
 package org.example.demo_ssr_v1_1.payment;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
+import org.example.demo_ssr_v1_1._core.errors.exception.Exception400;
 
 public class PaymentResponse {
 
@@ -16,5 +19,36 @@ public class PaymentResponse {
             this.impKey = impKey;
         }
     }
+
+    // 결제 검증 응답 DTO - JS로 내려줄 데이터
+    @Data
+    public static class VerifyDTO {
+        private Integer amount;
+        private Integer currentPoint;
+
+        public VerifyDTO(Integer amount, Integer currentPoint) {
+            this.amount = amount;
+            this.currentPoint = currentPoint;
+        }
+    }
+
+
+    // 포트원 액세스 토큰 응답 DTO 설계
+    @Data
+    public static class PortOneTokenResponse {
+        private int code;
+        private String message;
+        private ResponseData response;
+
+        @Data
+        @JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy.class)
+        public static class ResponseData {
+            // access_token --> @JsonNaming --> accessToken
+            private String accessToken;
+            private int now;
+            private int expiredAt;
+        }
+    }
+
 
 }
