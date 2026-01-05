@@ -54,17 +54,17 @@ public class PaymentApiController {
         reqDTO.validate();
 
         // 3. 서비스단 코드 설계
-        paymentService.결제검증및충전(
+        PaymentResponse.VerifyDTO verifyDTO = paymentService.결제검증및충전(
                 sessionUser.getId(),
                 reqDTO.getImpUid(),
                 reqDTO.getMerchantUid()
         );
+        // 세션에 사용자 포인트 즉시 업데이트
+        sessionUser.setPoint(verifyDTO.getCurrentPoint());
+        // 반드시 갱신해주어야 함.
+        session.setAttribute("sessionUser", sessionUser);
 
-        // 4. 세션에서 사용자 포인트 정보 즉시 업데이트
-        // TODO
-
-        return ResponseEntity.ok().body("임시 성공");
-
+        return ResponseEntity.ok().body(verifyDTO);
     }
 
 

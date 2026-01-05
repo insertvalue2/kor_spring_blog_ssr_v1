@@ -166,16 +166,13 @@
              })
            .then(data => {
                // 모든 검증 통과 (서버단에서 포인트 충전 완료)
-               alert(`충전이 완료되었습니다`);
+               alert(`충전이 완료되었습니다\n충전된 금액:${data.amount}`);
+               location.href = '/user/detail';
            })
            .catch(err => {
               alert('결제 검증에 실패했습니다\n관리자에게 문의하세요');
            });
-
-
         }
-
-
     }); // end of DOMContentLoaded
 
 </script>

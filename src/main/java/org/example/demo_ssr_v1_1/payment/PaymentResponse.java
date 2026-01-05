@@ -50,5 +50,24 @@ public class PaymentResponse {
         }
     }
 
+    //포트원 결제(포트원 서버에 DB 저장되어 있음) 조회 응답 DTO
+    @Data
+    public static class PortOnePaymentResponse {
+        private int code;
+        private String message;
+        private PaymentData response;
+
+        @Data
+        @JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy.class)
+        public static class PaymentData {
+            private Integer amount;
+            private String impUid;
+            private String merchantUid;
+            private String status;
+            private Long paidAt;
+        }
+    }
+
+
 
 }

@@ -56,7 +56,7 @@ public class PaymentService {
     }
 
     @Transactional
-    public void 결제검증및충전(Long userId, String impUid, String merchantUid) {
+    public PaymentResponse.VerifyDTO 결제검증및충전(Long userId, String impUid, String merchantUid) {
 
         // 실제 UserId 로 사용자가 존재 확인
         User user = userRepository.findById(userId)
@@ -69,9 +69,68 @@ public class PaymentService {
 
         // 위변조 방지 때문에 검증 (500원 결제 --> 500만원 포인트 충전을 막아야 한다)
         // 외부 통신 시작 ( 인증서버 --> JWT --> 포트원 자원 서버에 조회 요청)
+        PaymentResponse.PortOnePaymentResponse.PaymentData paymentData = 포트원결제조회(impUid, merchantUid);
 
-        // 임시 1 -
-        포트원액세스토큰발급();
+        // 사용자 한테 자동으로 포인트 충전 처리
+        user.chargePoint(paymentData.getAmount());
+
+        // 결제 내역 저장
+        // 객체 생성인데 비영속상태 객체 이다.
+        Payment payment = Payment
+                .builder()
+                .impUid(impUid)
+                .merchantUid(merchantUid)
+                .user(user)
+                .amount(paymentData.getAmount())
+                .status("paid")
+                .build();
+
+        paymentRepository.save(payment);
+
+        // 필요한 데이터만 반환
+        return new PaymentResponse.VerifyDTO(paymentData.getAmount(), user.getPoint());
+    }
+
+    private PaymentResponse.PortOnePaymentResponse.PaymentData 포트원결제조회(String impUid, String merchantUid) {
+        // 1. 액세스 토큰 발급
+        String accessToken = 포트원액세스토큰발급();
+
+        // 2. 포트원 자원서버에 결제 정보 조회 요청
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            // 포트원 단건 조회 API ( GET 방식와 헤더에 Bearer + "공백" asdfasdfqedf)
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(accessToken);
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+
+            ResponseEntity<PaymentResponse.PortOnePaymentResponse> response = restTemplate.exchange(
+                "https://api.iamport.kr/payments/" + impUid,
+                HttpMethod.GET,
+                request,
+                PaymentResponse.PortOnePaymentResponse.class
+            );
+
+            // 3. 응답 데이터 추출
+            PaymentResponse.PortOnePaymentResponse.PaymentData data =
+                    response.getBody().getResponse();
+
+            if(data == null) {
+                throw new Exception400("결제 정보를 찾을 수 없습니다");
+            }
+
+            // 4. ** 데이터 무결성 검증 **
+            if(!"paid".equals(data.getStatus())) {
+                throw new Exception400("결제가 완료되지 않았습니다");
+            }
+            if(!merchantUid.equals(data.getMerchantUid())) {
+                throw new Exception400("주문번호가 일치하지 않습니다");
+            }
+
+            return data;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
@@ -100,16 +159,11 @@ public class PaymentService {
                     request,
                     PaymentResponse.PortOneTokenResponse.class
             );
-            System.out.println("액세스 토큰 확인 ");
-            System.out.println(response.getBody().getResponse().getAccessToken());
-            System.out.println("response : " + response);
-
+            // 응답 받은 엑세트 토큰 리턴
+            return response.getBody().getResponse().getAccessToken();
         } catch (Exception e) {
             throw new Exception400("포트원 인증실패: 관리자 설정을 확인하세요");
         }
-
-        // TODO - 반드시 응답 값 수정
-        return  null;
     }
 
 }
