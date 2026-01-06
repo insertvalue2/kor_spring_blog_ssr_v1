@@ -67,7 +67,6 @@ public class PaymentApiController {
         return ResponseEntity.ok().body(verifyDTO);
     }
 
-
 }
 
 
