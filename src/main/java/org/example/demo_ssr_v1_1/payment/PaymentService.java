@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,6 +29,17 @@ public class PaymentService {
 
     @Value("${portone.imp-secret}")
     private String impSecret;
+
+
+    // 결제 내역 목록 조회
+    public List<PaymentResponse.ListDTO> 결제내역조회(Long userId) {
+        List<Payment> paymentList = paymentRepository.findAllByUserId(userId);
+
+        return paymentList.stream()
+                .map(PaymentResponse.ListDTO::new)
+                .toList();
+    }
+
 
 
     // 1. 사전 결제 요청
