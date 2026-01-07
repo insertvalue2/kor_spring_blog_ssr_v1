@@ -70,6 +70,7 @@ public class PaymentResponse {
     }
 
     // 결제 내역 리스트 응답 DTO
+    @Data
     public static class ListDTO {
         private Long id;
         private String impUid;  // 포트원 결제 고유 번호
