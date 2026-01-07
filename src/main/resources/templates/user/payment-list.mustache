@@ -28,7 +28,12 @@
                 </div>
                 <div class="text-end">
                     <span class="badge bg-primary fs-6">{{amount}} P</span>
+                {{#isRefundable}}
+                    <!--  /refund/request/1  (만들어야 함) 1은 userId -->
+                    <a href="/refund/request/1" class="btn btn-outline-danger btn-sm">환불하기</a>
+                {{/isRefundable}}
                 </div>
+
             </div>
             {{/paymentList}}
 
