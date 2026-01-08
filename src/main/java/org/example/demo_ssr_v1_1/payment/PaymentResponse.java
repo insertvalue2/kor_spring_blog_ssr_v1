@@ -103,5 +103,10 @@ public class PaymentResponse {
                 this.paidAt = MyDateUtil.timestampFormat(payment.getCreatedAt());
             }
         }
+
+        public ListDTO(Payment payment) {
+            //  [] ,  *(true, false)
+            this(payment, "paid".equals(payment.getStatus()));
+        }
     }
 }
