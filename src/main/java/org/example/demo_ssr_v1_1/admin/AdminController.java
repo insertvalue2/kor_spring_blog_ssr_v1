@@ -53,11 +53,8 @@ public class AdminController {
     // /admin/refund/${id}/approve
     @PostMapping("/admin/refund/{id}/approve")
     public String approveRefund(@PathVariable Long id) {
-
         refundService.환불승인(id);
-
         return "redirect:/admin/refund/list";
-
     }
 
 }

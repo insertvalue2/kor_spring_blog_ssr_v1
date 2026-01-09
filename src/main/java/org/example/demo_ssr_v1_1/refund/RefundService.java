@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v1_1._core.errors.exception.Exception400;
 import org.example.demo_ssr_v1_1._core.errors.exception.Exception403;
 import org.example.demo_ssr_v1_1._core.errors.exception.Exception404;
+import org.example.demo_ssr_v1_1._core.errors.exception.Exception500;
 import org.example.demo_ssr_v1_1.payment.Payment;
 import org.example.demo_ssr_v1_1.payment.PaymentRepository;
 import org.example.demo_ssr_v1_1.payment.PaymentResponse;
@@ -133,17 +134,65 @@ public class RefundService {
             throw new Exception400("사용자의 포인트 잔액이 부족하여 환불 불가");
         }
 
-        포트원결제취소();
+        포트원결제취소(payment.getImpUid(), payment.getAmount());
         // 포트원 액세스 토큰 발급 요청(포트원 인증서버)
         // 포트원 자원 서버에서 update 요청 (결제 취소)
+        
         // 내 포인트 잔액 -> 환불한 금액 만큼 차감 처리
+        user.deductPoint(refundAmount); // 포인트 차감
+        payment.setStatus("cancelled"); // 결제 상태 paid -> cancelled 변경
+        refundRequest.approve();        // 환불 상태 승인으로 변경
 
+        // 더티 체킹
     }
 
-    private void 포트원결제취소() {
+    private void 포트원결제취소(String impUid, Integer amount) {
         // 1. 액세스 토큰 발급
         String accessToken = 포트원액세스토큰발급();
         System.out.println("accessToken : " + accessToken);
+
+        // 2. 요청 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(accessToken);
+
+        // 3. 요청 바디 설정
+        Map<String, Object> body = new HashMap<>();
+        body.put("imp_uid", impUid);
+        body.put("amount", amount);
+        body.put("reason", "관리자 환불 승인");
+
+        // 4. HTTP 요청 메세지 만들기
+        HttpEntity<Map<String, Object>> requestEntity =
+                new HttpEntity<>(body, headers);
+
+        // 5. HTTP 클라이언트 객체 --> RestTemplate 사용할 예정
+        RestTemplate restTemplate = new RestTemplate();
+
+        try {
+          ResponseEntity<Map> response = restTemplate.exchange(
+                    "https://api.iamport.kr/payments/cancel",
+                    HttpMethod.POST,
+                    requestEntity,
+                    Map.class
+            );
+
+          // 6. 응답 처리
+          Map<String, Object> responseBody = response.getBody();
+          if(responseBody == null) {
+              throw new Exception500("포트원 응답이 비어있습니다");
+          }
+
+          Integer code = (Integer) responseBody.get("code");
+          if(code != 0) {
+              String message = (String) responseBody.get("message");
+              throw new Exception400("환불 실패 : " + message);
+          }
+
+        } catch (Exception e) {
+            throw new Exception500("포트원 결제 취소 중 오류 발생");
+        }
+
     }
 
     private String 포트원액세스토큰발급() {
