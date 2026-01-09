@@ -26,7 +26,7 @@ public class RefundResponse {
             this.rejectReason =
                     (refund.getRejectReason() == null) ? "" :refund.getRejectReason();
 
-            // 스위치 표현식 (14 이후 부터 사용가증)
+            // 스위치 표현식 (14 이후 부터 사용가능)
             switch (refund.getStatus()) {
                 case PENDING -> this.statusDisplay = "대기중";
                 case APPROVED -> this.statusDisplay = "승인됨";
