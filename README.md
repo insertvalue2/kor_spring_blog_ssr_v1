@@ -145,6 +145,32 @@ Spring Boot 기반의 서버 사이드 렌더링(SSR) 웹 애플리케이션입�
 - 포인트 부족 시 예외 처리
 - 구매 여부 확인 기능 (게시글 상세 조회 시)
 
+### 결제 및 환불 시스템
+
+#### 포인트 결제(충전) 시스템
+- PortOne(아임포트) 연동을 통한 포인트 결제/충전
+- 결제 사전 준비(`merchantUid` 생성) 및 중복 결제 방지 로직
+- 포트원 결제 고유 번호(`impUid`)와 가맹점 주문 번호(`merchantUid`) 기반 무결성 검증
+- 실제 결제 금액과 포인트 충전 금액 일치 여부 검증
+- 결제 내역 저장 및 상태 관리(`paid`, `cancelled`)
+- 결제 내역 목록 조회 시 환불 가능 여부(`isRefundable`) 계산
+
+#### 환불 요청 및 관리 시스템
+- 사용자는 결제 내역 상세 화면에서 환불 요청 진입
+- 본인 결제 내역이며 결제 상태가 `paid` 인 경우에만 환불 요청 가능
+- 결제 1건당 환불 요청 1건만 생성되도록 제약(`payment_id` unique)
+- 환불 요청 사유 저장 및 상태 관리(`PENDING`, `APPROVED`, `REJECTED`)
+- 사용자는 나의 환불 요청 목록을 조회 가능
+- 관리자는 전체 환불 요청 목록을 조회하고 승인/거절 처리
+- 관리자 환불 승인 시:
+  - PortOne API를 이용해 실제 결제 취소(부분/전액 환불 시나리오 대응 가능 구조)
+  - 사용자 포인트에서 환불 금액 차감
+  - 결제 상태를 `cancelled` 로 변경
+  - 환불 요청 상태를 `APPROVED` 로 변경
+- 관리자 환불 거절 시:
+  - 거절 사유 필수 입력
+  - 환불 요청 상태를 `REJECTED` 로 변경
+
 ### 관리자 기능
 
 #### 관리자 대시보드
@@ -206,6 +232,23 @@ src/main/java/org/example/demo_ssr_v1_1/
 │   ├── BoardRepository.java         # 게시글 데이터 접근 계층
 │   ├── BoardRequest.java            # 요청 DTO
 │   └── BoardResponse.java           # 응답 DTO
+│
+├── payment/                 # 포인트 결제(충전) 기능
+│   ├── Payment.java                 # 결제 내역 엔티티
+│   ├── PaymentApiController.java    # 결제 준비/검증 REST API
+│   ├── PaymentService.java          # 결제 및 포트원 연동 비즈니스 로직
+│   ├── PaymentRepository.java       # 결제 데이터 접근 계층
+│   ├── PaymentRequest.java          # 요청 DTO
+│   └── PaymentResponse.java         # 응답 DTO
+│
+├── refund/                  # 환불 기능
+│   ├── RefundRequest.java           # 환불 요청 엔티티
+│   ├── RefundStatus.java            # 환불 상태 enum (PENDING, APPROVED, REJECTED)
+│   ├── RefundService.java           # 환불 비즈니스 로직 및 포트원 취소 연동
+│   ├── RefundController.java        # 사용자 환불 요청/목록 화면 컨트롤러
+│   ├── RefundRequestDTO.java        # 환불 요청 DTO
+│   ├── RefundResponse.java          # 환불 목록/관리 DTO
+│   └── RefundRequestRepository.java # 환불 요청 데이터 접근 계층
 │
 ├── purchase/                # 구매 기능
 │   ├── Purchase.java                # 구매 내역 엔티티
@@ -353,6 +396,8 @@ $env:TENCO_KEY="your_tenco_key"
 export KAKAO_CLIENT_ID=your_kakao_client_id
 export KAKAO_CLIENT_SECRET=your_kakao_client_secret
 export TENCO_KEY=your_tenco_key
+export PORTONE_IMP_KEY=your_portone_imp_key
+export PORTONE_IMP_SECRET=your_portone_imp_secret
 ```
 
 #### IDE에서 설정 (IntelliJ IDEA)
@@ -375,6 +420,14 @@ spring:
     url: jdbc:mysql://localhost:3306/myblog?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
     username: your_username
     password: your_password
+```
+
+또한 포트원(PortOne) 결제 연동을 위해 다음 설정이 필요합니다:
+
+```yaml
+portone:
+  imp-key: ${PORTONE_IMP_KEY}
+  imp-secret: ${PORTONE_IMP_SECRET}
 ```
 
 #### H2 Database 사용 (개발용)
@@ -499,6 +552,16 @@ java -jar build/libs/demo_ssr_v1_1-0.0.1-SNAPSHOT.jar
   - 동작: 파일 시스템에서 삭제, DB에서 null 처리
   - 반환: 마이페이지로 리다이렉트
 
+- `GET /user/payment/list` - 나의 결제 내역(포인트 충전 내역) 조회
+  - 요구사항: 로그인 필수
+  - 동작: `payment_tb` 에 저장된 결제 내역을 조회 후 환불 가능 여부 계산
+  - 반환: 결제 내역 리스트 페이지 (`user/payment-list.mustache`)
+
+- `GET /user/purchase/list` - 나의 유료 게시글 구매 내역 조회
+  - 요구사항: 로그인 필수
+  - 동작: 구매 내역 조회 및 화면 전달
+  - 반환: 구매 내역 리스트 페이지 (`user/purchase-list.mustache`)
+
 ### 게시판 관련 엔드포인트
 
 #### 게시글 조회
@@ -568,6 +631,26 @@ java -jar build/libs/demo_ssr_v1_1-0.0.1-SNAPSHOT.jar
   - 요구사항: 로그인 필수, 관리자 권한 필요
   - 반환: 관리자 대시보드 페이지
 
+- `GET /admin/refund/list` - 관리자 환불 요청 관리 목록
+  - 요구사항: 로그인 필수, 관리자 권한 필요
+  - 반환: 환불 요청 관리 테이블 페이지 (`admin-refund-list.mustache`)
+
+- `POST /admin/refund/{id}/reject` - 환불 요청 거절
+  - 요구사항: 로그인 필수, 관리자 권한 필요
+  - 파라미터: `id`(환불 요청 PK), `rejectReason`(거절 사유, 필수)
+  - 동작: 대기 상태(`PENDING`) 환불 요청에 대해 거절 처리 및 거절 사유 저장
+  - 반환: `/admin/refund/list` 로 리다이렉트
+
+- `POST /admin/refund/{id}/approve` - 환불 요청 승인
+  - 요구사항: 로그인 필수, 관리자 권한 필요
+  - 파라미터: `id`(환불 요청 PK)
+  - 동작:
+    - 포트원 API를 통한 실제 결제 취소 요청
+    - 사용자 포인트에서 환불 금액 차감
+    - 결제 상태를 `cancelled` 로 변경
+    - 환불 요청 상태를 `APPROVED` 로 변경
+  - 반환: `/admin/refund/list` 로 리다이렉트
+
 ### REST API 엔드포인트
 
 #### 이메일 인증 API
@@ -587,6 +670,28 @@ java -jar build/libs/demo_ssr_v1_1-0.0.1-SNAPSHOT.jar
   - 요청 데이터: `{ "amount": 1000 }`
   - 동작: 사용자 포인트 충전, 세션 정보 갱신
   - 반환: `{ "message": "포인트가 충전되었습니다", "amount": 1000, "currentPoint": 5000 }`
+
+#### 결제(포인트 충전) API
+- `POST /api/payment/prepare` - 결제 사전 준비(주문번호 생성)
+  - 요구사항: 로그인 필수
+  - 요청 데이터: `PaymentRequest.PrepareDTO` (JSON, 결제/충전 금액 등)
+  - 동작:
+    - 세션 사용자 확인
+    - 사용자 존재 여부 검증
+    - 고유한 `merchant_uid` 생성 및 중복 여부 확인
+  - 반환: `{ "merchant_uid": "...", "amount": 5000, "imp_key": "포트원 REST API KEY" }`
+
+- `POST /api/payment/verify` - 결제 검증 및 포인트 충전
+  - 요구사항: 로그인 필수
+  - 요청 데이터: `PaymentRequest.VerifyDTO` (`impUid`, `merchantUid`)
+  - 동작:
+    - 세션 사용자 확인
+    - 이미 처리된 결제(`impUid`)인지 중복 검사
+    - 포트원 API를 통해 실제 결제 금액/상태 검증
+    - 결제가 정상(`paid`)이며 `merchantUid` 가 일치하면 사용자 포인트 충전
+    - 결제 내역(`payment_tb`) 저장
+    - 세션 내 사용자 포인트 즉시 갱신
+  - 반환: `PaymentResponse.VerifyDTO` (충전 금액, 현재 포인트)
 
 ### REST API 테스트 엔드포인트
 

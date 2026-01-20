@@ -2,6 +2,7 @@ package org.example.demo_ssr_v1_1.user;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.example.demo_ssr_v1_1._core.errors.exception.Exception400;
 import org.example.demo_ssr_v1_1._core.errors.exception.Exception401;
 import org.example.demo_ssr_v1_1.payment.PaymentResponse;
 import org.example.demo_ssr_v1_1.payment.PaymentService;
@@ -187,9 +188,22 @@ public class UserController {
     // 회원가입 기능 요청
     // http://localhost:8080/join
     @PostMapping("/join")
-    public String joinProc(UserRequest.JoinDTO joinDTO) {
+    public String joinProc(UserRequest.JoinDTO joinDTO, HttpSession session) {
         joinDTO.validate();
+
+        // 서버단 이메일 인증 여부 검증 (세션 기반)
+        String email = joinDTO.getEmail();
+        Boolean isVerified = (Boolean) session.getAttribute("emailVerified_" + email);
+        if (isVerified == null || !isVerified) {
+            // 프론트단 우회(직접 POST) 방지를 위해 서버에서도 반드시 막아준다.
+            throw new Exception400("이메일 인증을 완료해야 회원가입이 가능합니다");
+        }
+
         userService.회원가입(joinDTO);
+
+        // 회원가입 완료 후 해당 이메일의 인증 플래그 제거 (재사용 방지)
+        session.removeAttribute("emailVerified_" + email);
+
         return "redirect:/login";
     }
 

@@ -4,7 +4,6 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.example.demo_ssr_v1_1._core.utils.MailUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -61,6 +60,8 @@ public class MailService {
         if(savedCode != null && savedCode.equals(code)) {
             // 세션 메모리에서 제거 해주어야 함
             session.removeAttribute("code_" + email);
+            // 이메일 인증 완료 플래그 저장 (회원가입 시 서버단에서 검증용)
+            session.setAttribute("emailVerified_" + email, true);
             return true;
         }
         return false;

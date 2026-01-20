@@ -12,7 +12,7 @@
     <div class="card">
         <div class="card-header"><b>회원가입을 해주세요</b></div>
         <div class="card-body">
-            <form action="/join" method="post" enctype="multipart/form-data">
+            <form action="/join" method="post" enctype="multipart/form-data" onsubmit="return validateJoinForm()">
                 <div class="mb-3">
                     <input type="text" class="form-control" placeholder="Enter username" name="username">
                 </div>
@@ -37,7 +37,7 @@
                     <div id="msg" class="form-text"></div>
                 </div>
 
-                <!--    인증 완료 여부 저장 (hidden 필드)    -->
+                <!--    인증 완료 여부 저장 (hidden 필드 - 프론트 검증용)    -->
                 <input type="hidden" id="isEmailVerified" value="false">
 
                 <div class="mb-3">
@@ -76,6 +76,9 @@
                if(response.ok) {
                    // response.ok HTTP 상태 코드 200 ~ 299 범위를 의미 함
                    alert("인증번호가 메일로 전송 되었습니다. 메일을 확인해주세요");
+                   // 새로 인증을 시작했으므로 프론트단 인증 상태를 초기화
+                   document.querySelector("#isEmailVerified").value = "false";
+                   document.querySelector("#msg").innerHTML = "";
                    document.querySelector("#code-box").style.display = "block";
                } else {
                    // 서버에서 에러 응답 (400, 500)
@@ -118,17 +121,27 @@
                    // 인증 성공
                    msgBox.innerHTML = "<span style='color: green' >인증되었습니다</span>"
                    // dom 접근해서 false --> true 변경 처리
-                   document.querySelector("#isEmailVerified").value = true;
+                   document.querySelector("#isEmailVerified").value = "true";
                    // 이메일 수정 불가 처리
                    document.querySelector("#email").readOnly = true;
                } else {
                    msgBox.innerHTML = "<span style='color: red' >인증번호가 틀렸습니다</span>"
-                   document.querySelector("#isEmailVerified").value = false;
+                   document.querySelector("#isEmailVerified").value = "false";
                }
            } catch (e) {
                 console.log(e);
                 alert("네트워크 오류 발생");
            }
+       }
+
+       // 회원가입 폼 최종 제출 전, 이메일 인증 여부를 프론트에서 한 번 더 체크
+       function validateJoinForm() {
+           const isVerified = document.querySelector("#isEmailVerified").value === "true";
+           if (!isVerified) {
+               alert("이메일 인증을 완료한 후 회원가입이 가능합니다.");
+               return false;
+           }
+           return true;
        }
 
 
